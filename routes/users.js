@@ -3,30 +3,28 @@ var router = express.Router();
 var User = require("../Models/Model");
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
+var authenticator = require("../bin/middleweres");
 
 
 const key = "this-is-my-key";
 
 
-const authenticateJWT = (req, res, next) => {
-  const accesToken = req.cookies.token
-  if (!accesToken) {
-
-    return res.status(403).send("invalid")
+const authenticateJWT = async (req, res, next)=>{
+  const token = req.cookies.token || ""
+  console.log(token)
+  if(!token){
+    return res.status(400).send("login first")
   }
-
-  let payload
   try {
-    payload = jwt.verify(accessToken, key)
-    next()
-  } catch (e) {
-    return res.status(401).send()
-  }
-
+    const decrypt = await jwt.verify(token, key)
+    console.log(decrypt)
+    
+    req.user={
+      _id :decrypt._id
+    }
+    next();
+  } catch (e) {}
 }
-
-
-
 
 
 
@@ -37,16 +35,10 @@ const authenticateJWT = (req, res, next) => {
 router.post('/register', async function(req, res, next) {
   try {
     const {
-      username, password, email
+     name, username, password, email, dob, country, profile_pic
     } = req.body;
-
-
-    // validation .....
-
-    if (!username || !password || !email) {
-      return res.status(400).send("fill all fields")
-    }
-
+    
+    
     const existinguser = await User.findOne({
       username
     })
@@ -65,23 +57,38 @@ router.post('/register', async function(req, res, next) {
     const newUser = new User({
       username: username,
       password: hasPass,
-      email: email
+      email: email,
+      name:name,
+      dob:dob,
+      country:country,
+      profile_pic:profile_pic
     })
 
-    const savedUser = await newUser.save();
+   newUser.save((err, data)=>{
+     if (err) {
+       res.status(400).send(err)
+     } else {
+       
+           // generation of token
 
-    // generation of token
-
-    const token = jwt.sign({
-      username: savedUser._id
+       const token = jwt.sign({
+      _id: data._id
     }, key)
 
 
     res.cookie("token", token, {
       httpOnly: true
-    }).send("registered ")
+    }).send()
+      /*{
+      user:savedUser,
+      token :token
+    })*/
+     }
+     
+   });
 
 
+ 
   } catch (e) {
     res.status(500).send(e)
   }
@@ -118,20 +125,18 @@ router.post("/login", async (req, res)=> {
 
 
     const token = jwt.sign({
-      username: existinguser._id
+      _id: existinguser._id
     }, key)
 
 
     res.cookie("token", token, {
       httpOnly: true
-    }).send({
-      message: "logged in",
-      token: token
-    })
-
-
-
-
+    }).send(existinguser)
+    /*  {
+      user:existinguser,
+      token :token
+    })*/
+    
 
   } catch (e) {
     res.status(500).send(e)
@@ -148,15 +153,67 @@ router.get("/logout", (req, res)=> {
 })
 
 
-
-router.get("/test/:username", authenticateJWT, (req, res)=> {
-  const userData = User.findOne({
-    username
+router.get("/myInfo", authenticateJWT, (req, res)=>{
+  User.findOne({_id:req.user._id}, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(data)
+    }
   })
-  res.send(userData.email)
 })
 
 
+//post moment
+
+router.post("/post_moment", authenticateJWT, (req, res)=>{
+  const {postImageName, caption} = req.body
+  User.findOneAndUpdate({_id:req.user._id}, {$push:{
+    moments:{
+      postImageName:postImageName,
+      caption:caption
+    }
+  }}, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(data)
+    }
+  })
+})
+
+//delete moment 
+router.post("/delete_moment", authenticateJWT, (req, res)=>{
+  const {moment_id} = req.body
+  User.findOneAndUpdate({_id:req.user._id}, {$pull:{
+    moments:{
+      _id:moment_id
+    }
+  }}, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(data)
+    }
+  })
+})
+
+//update moment
+
+router.post("/update_moment", authenticateJWT, (req, res)=>{
+  const {moment_id, caption} = req.body
+  User.findOneAndUpdate({_id:req.user._id},
+  {
+    
+  },
+  (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(data)
+    }
+  })
+})
 
 
 

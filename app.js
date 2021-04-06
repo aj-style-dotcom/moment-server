@@ -8,7 +8,7 @@ var mongoose = require("mongoose");
 
 var cors = require("cors");
 
-var mongoDB = "mongodb"
+var mongoDB = "mongodb://localhost:27017/"
 
 mongoose.connect(mongoDB, {
   useNewUrlParser: true,
@@ -32,7 +32,7 @@ app.use(cors())
 // route paths   ..........
 
 
-app.use('/api', require('./routes/users'));
+app.use('/moment', require('./routes/users'));
 
 
 
