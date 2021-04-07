@@ -9,33 +9,12 @@ var authenticator = require("../bin/middleweres");
 const key = "this-is-my-key";
 
 
-const authenticateJWT = async (req, res, next)=>{
-  const token = req.cookies.token || ""
-  console.log(token)
-  if(!token){
-    return res.status(400).send("login first")
-  }
-  try {
-    const decrypt = await jwt.verify(token, key)
-    console.log(decrypt)
-    
-    req.user={
-      _id :decrypt._id
-    }
-    next();
-  } catch (e) {}
-}
-
-
-
-
-
 
 /* Registeration of user*/
 router.post('/register', async function(req, res, next) {
   try {
     const {
-     name, username, password, email, dob, country, profile_pic
+     name, bio, username, password, email, dob, country, profile_pic
     } = req.body;
     
     
@@ -59,6 +38,7 @@ router.post('/register', async function(req, res, next) {
       password: hasPass,
       email: email,
       name:name,
+      bio:bio,
       dob:dob,
       country:country,
       profile_pic:profile_pic
@@ -144,6 +124,7 @@ router.post("/login", async (req, res)=> {
 })
 
 
+// logout 
 router.get("/logout", (req, res)=> {
   res.cookie("token", "", {
     httpOnly: true,
@@ -153,7 +134,8 @@ router.get("/logout", (req, res)=> {
 })
 
 
-router.get("/myInfo", authenticateJWT, (req, res)=>{
+// my private information
+router.get("/myInfo", authenticator, (req, res)=>{
   User.findOne({_id:req.user._id}, (err, data)=>{
     if (err) {
       res.status(500).send(err)
@@ -166,14 +148,14 @@ router.get("/myInfo", authenticateJWT, (req, res)=>{
 
 //post moment
 
-router.post("/post_moment", authenticateJWT, (req, res)=>{
+router.post("/post_moment", authenticator, (req, res)=>{
   const {postImageName, caption} = req.body
   User.findOneAndUpdate({_id:req.user._id}, {$push:{
     moments:{
       postImageName:postImageName,
       caption:caption
     }
-  }}, (err, data)=>{
+  }},{new :true}, (err, data)=>{
     if (err) {
       res.status(500).send(err)
     } else {
@@ -183,7 +165,7 @@ router.post("/post_moment", authenticateJWT, (req, res)=>{
 })
 
 //delete moment 
-router.post("/delete_moment", authenticateJWT, (req, res)=>{
+router.post("/delete_moment", authenticator, (req, res)=>{
   const {moment_id} = req.body
   User.findOneAndUpdate({_id:req.user._id}, {$pull:{
     moments:{
@@ -200,12 +182,16 @@ router.post("/delete_moment", authenticateJWT, (req, res)=>{
 
 //update moment
 
-router.post("/update_moment", authenticateJWT, (req, res)=>{
+router.post("/update_moment", authenticator, (req, res)=>{
   const {moment_id, caption} = req.body
-  User.findOneAndUpdate({_id:req.user._id},
-  {
-    
+  User.updateOne({_id:req.user._id,
+    "moments._id" : moment_id
+  },{
+    $set:{
+      "moments.$.caption":caption
+    }
   },
+  {new :true},
   (err, data)=>{
     if (err) {
       res.status(500).send(err)
@@ -215,6 +201,170 @@ router.post("/update_moment", authenticateJWT, (req, res)=>{
   })
 })
 
+
+//request a bounding
+
+router.get("/req-bound/:_id", authenticator, (req, res)=>{
+  const personId = req.params._id
+  const userId = req.user._id
+  
+  User.findOneAndUpdate({_id:userId},{$push:{
+   requested_Bounds:{
+     persion_id:personId
+   }
+  }},{new:true}, (err,data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      User.findOneAndUpdate({_id:personId}, {
+        $push:{
+   requesting_Bounds:{
+     persion_id:userId
+   }
+  }
+      }, (err, data)=>{
+        if (err) {
+          res.status(500).send(err)
+        } else {
+          res.send()
+        }
+      })
+      
+      
+    }
+  })
+  
+})
+
+
+//delete requested bounding
+
+router.get("/delete-req-bound/:_id", authenticator, (req ,res)=>{
+  
+  const personId = req.params._id
+  const userId = req.user._id
+  
+  User.findOneAndUpdate({_id:userId},{$pull:{
+    requested_Bounds:{
+      persion_id:personId
+    }
+  }}, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      
+      User.findOneAndUpdate({_id:personId},{
+        $pull:{
+          requesting_Bounds:{
+            persion_id:userId
+          }
+        }
+      },(err, data)=>{
+        if (err) {
+          res.status(500).send(err)
+        } else {
+          res.send()
+        }
+      })
+      
+    }
+  })
+  
+})
+
+
+//reject bounding request 
+
+router.get("/reject-bound-req/:_id", authenticator, (req ,res)=>{
+  
+  const personId = req.params._id
+  const userId = req.user._id
+  
+  User.findOneAndUpdate({_id:userId},{$pull:{
+    requested_Bounds:{
+      persion_id:personId
+    }
+  }}, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      
+      User.findOneAndUpdate({_id:personId},{
+        $pull:{
+          requesting_Bounds:{
+            persion_id:userId
+          }
+        }
+      },(err, data)=>{
+        if (err) {
+          res.status(500).send(err)
+        } else {
+          res.send()
+        }
+      })
+    }
+  })
+  
+})
+
+
+//accept bound request 
+
+router.get("/accept-bound-req/:_id", authenticator, (req, res)=>{
+  
+  const personId = req.params._id
+  const userId = req.user._id
+  
+  User.findOneAndUpdate({_id:userId}, {$push:{
+    Boundings:{
+      persion_id:personId
+    }
+  }}, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      
+      User.findOneAndUpdate({_id:personId},{$push:{
+        Boundings:{
+          persion_id:userId
+        }
+      }
+      },(err, data)=>{
+        if (err) {
+          res.status(500).send(err)
+        } else {
+          
+          User.findOneAndUpdate({_id:userId},{$pull:{
+            requesting_Bounds:{
+              persion_id:personId
+            }
+          }}, (err, data)=>{
+            if (err) {
+              res.status(500).send(err)
+            } else {
+              
+              User.findOneAndUpdate({_id:personId}, {
+                $pull:{
+                  requested_Bounds:{
+                    persion_id:userId
+                  }
+                }
+              }, (err, data)=>{
+                if (err) {
+                  res.status(500).send(err)
+                } else {
+                  res.send()
+                }
+              })
+              
+            }
+          })
+        }
+      })
+    }
+  })
+  
+})
 
 
 module.exports = router;

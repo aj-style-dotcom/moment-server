@@ -31,11 +31,10 @@ app.use(cors())
 
 // route paths   ..........
 
+const pub = require("./routes/public")
 
-app.use('/moment', require('./routes/users'));
-
-
-
+app.use('/private', require('./routes/users'));
+app.use("/public", require("./routes/public"))
 
 
 // catch 404 and forward to error handler

@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const UserSchema = new mongoose.Schema({
     name:String,
     email: String,
+    bio: String,
     profile_pic :String,
     dob:String,
     email:String,
@@ -34,12 +35,15 @@ const UserSchema = new mongoose.Schema({
         }
     ],
     Boundings:[{
+        date:Date,
         persion_id:String
     }],
     requested_Bounds:[{
+        date:Date,
         persion_id:String
     }],
     requesting_Bounds:[{
+        date:Date,
         persion_id:String
     }]
 })
