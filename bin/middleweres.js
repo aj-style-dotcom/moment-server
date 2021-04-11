@@ -2,7 +2,7 @@ var jwt = require("jsonwebtoken");
 const key = "this-is-my-key";
 
 const authenticator = async (req, res, next)=>{
-  const token = req.cookies.token || ""
+  const token = req.cookies.token
   console.log(token)
   if(!token){
     return res.status(400).send("login first")
@@ -15,7 +15,9 @@ const authenticator = async (req, res, next)=>{
       _id :decrypt._id
     }
     next();
-  } catch (e) {}
+  } catch (e) {
+    
+  }
 }
 
 

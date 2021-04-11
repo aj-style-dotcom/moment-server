@@ -31,21 +31,23 @@ const UserSchema = new mongoose.Schema({
                 date:Date,
                 commenter_id : String,
                 comments:String
-            }]
-        }
-    ],
+            },{timestamps:true}]
+        },
+        {
+          timestamps:true
+        }],
     Boundings:[{
         date:Date,
         persion_id:String
-    }],
+    },{timestamps:true}],
     requested_Bounds:[{
         date:Date,
         persion_id:String
-    }],
+    },{timestamps:true}],
     requesting_Bounds:[{
         date:Date,
         persion_id:String
-    }]
-})
+    },{timestamps:true}]
+}, {timestamps:true})
 
 module.exports = User = mongoose.model("users", UserSchema);

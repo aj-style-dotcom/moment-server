@@ -56,9 +56,7 @@ router.post('/register', async function(req, res, next) {
     }, key)
 
 
-    res.cookie("token", token, {
-      httpOnly: true
-    }).send()
+    res.cookie("token",token).send()
       /*{
       user:savedUser,
       token :token
@@ -110,12 +108,11 @@ router.post("/login", async (req, res)=> {
 
 
     res.cookie("token", token, {
-      httpOnly: true
-    }).send(existinguser)
-    /*  {
+      httpOnly:true
+    }).send({
       user:existinguser,
       token :token
-    })*/
+    })
     
 
   } catch (e) {
@@ -366,5 +363,28 @@ router.get("/accept-bound-req/:_id", authenticator, (req, res)=>{
   
 })
 
+
+//get feeds 
+
+router.get("/feeds", authenticator, async (req, res)=>{
+  const userId = req.user._id
+  var bounded_users = await User.findOne({_id:userId})
+  var feedable_data = bounded_users.Boundings
+  
+  var feeds =[]
+  
+  for(let x of feedable_data){
+   var uData = await User.findOne({_id:x.persion_id})
+   
+   x_moment = uData.moments
+   
+   feeds= feeds.concat(x_moment)
+   
+   
+  }
+  console.log(feeds)
+  res.send(feeds)
+  
+})
 
 module.exports = router;
