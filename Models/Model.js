@@ -17,37 +17,50 @@ const UserSchema = new mongoose.Schema({
         type : String,
         requred :true
     },
-    
     moments:[
         {
+            user_id:String,
+            user_username:String,
+            user_dp:String,
             postImageName :String,
             caption:String,
-            date:Date,
-            likes:{
-                type:Number,
-                default:0
+            date:{
+              type:Date,
+              default : Date
             },
+            liked_by :[{
+              persion_id:String
+            }],
             comments:[{
-                date:Date,
-                commenter_id : String,
-                comments:String
-            },{timestamps:true}]
-        },
-        {
-          timestamps:true
+                date:{
+              type:Date,
+              default : Date
+            },
+                persion_id : String,
+                comment:String
+            }],
         }],
     Boundings:[{
-        date:Date,
+        date:{
+              type:Date,
+              default : Date
+            },
         persion_id:String
-    },{timestamps:true}],
+    }],
     requested_Bounds:[{
-        date:Date,
+        date:{
+              type:Date,
+              default : Date
+            },
         persion_id:String
-    },{timestamps:true}],
+    }],
     requesting_Bounds:[{
-        date:Date,
+        date:{
+              type:Date,
+              default : Date
+            },
         persion_id:String
-    },{timestamps:true}]
+    }]
 }, {timestamps:true})
 
 module.exports = User = mongoose.model("users", UserSchema);

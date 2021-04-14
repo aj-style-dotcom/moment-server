@@ -12,6 +12,7 @@ var mongoDB = "mongodb://localhost:27017/"
 
 mongoose.connect(mongoDB, {
   useNewUrlParser: true,
+  useCreateIndex: true, 
   useUnifiedTopology: true
 }).then(()=> {
   console.log("connected to database ✓")

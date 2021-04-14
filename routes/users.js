@@ -74,7 +74,7 @@ router.post('/register', async function(req, res, next) {
 
 
 
-/* login of user*/
+// login of user
 
 router.post("/login", async (req, res)=> {
   try {
@@ -145,14 +145,20 @@ router.get("/myInfo", authenticator, (req, res)=>{
 
 //post moment
 
-router.post("/post_moment", authenticator, (req, res)=>{
+router.post("/post-moment", authenticator, async (req, res)=>{
   const {postImageName, caption} = req.body
+  
+  var userData = await User.findOne({_id:req.user._id})
+  
   User.findOneAndUpdate({_id:req.user._id}, {$push:{
     moments:{
+      user_id:userData._id,
+      user_username:userData.username,
+      user_dp:userData.profile_pic,
       postImageName:postImageName,
       caption:caption
     }
-  }},{new :true}, (err, data)=>{
+  }}, (err, data)=>{
     if (err) {
       res.status(500).send(err)
     } else {
@@ -162,8 +168,8 @@ router.post("/post_moment", authenticator, (req, res)=>{
 })
 
 //delete moment 
-router.post("/delete_moment", authenticator, (req, res)=>{
-  const {moment_id} = req.body
+router.post("/delete_moment/:_id", authenticator, (req, res)=>{
+  const moment_id = req.params._id
   User.findOneAndUpdate({_id:req.user._id}, {$pull:{
     moments:{
       _id:moment_id
@@ -188,7 +194,6 @@ router.post("/update_moment", authenticator, (req, res)=>{
       "moments.$.caption":caption
     }
   },
-  {new :true},
   (err, data)=>{
     if (err) {
       res.status(500).send(err)
@@ -197,6 +202,105 @@ router.post("/update_moment", authenticator, (req, res)=>{
     }
   })
 })
+
+//react on a moment
+
+router.post("/react", authenticator, (req, res)=>{
+  const {
+    reaction, persion_id, moment_id
+  } = req.body;
+  
+  if (reaction=="like") {
+    
+    User.updateOne({_id:persion_id, "moments._id":moment_id}, {
+        $push:{
+          "moments.$.liked_by":{
+            persion_id:persion_id
+          }
+        }
+    }, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(data)
+    }
+  })
+    
+  } else if(reaction=="dislike") {
+    
+    User.updateOne({_id:persion_id,
+    "moments._id" : moment_id}, {
+      $pull:{
+        "moments.$.liked_by":{
+            persion_id:persion_id
+          }
+      }
+    }, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(data)
+    }
+  })
+  
+  } else{
+    res.status(404).send("wtf")
+  }
+  
+})
+
+
+//create comment
+
+router.post("/create-comment", authenticator, (req, res)=>{
+  const {
+    comment, persion_id, moment_id
+  } = req.body;
+  const userId = req.user._id
+  
+  User.updateOne({_id:persion_id, "moments._id":moment_id},{
+    $push:{
+      "moments.$.comments":{
+          persion_id:userId,
+          comment: comment
+          }
+        }
+  },(err, data)=>{
+    if (err) {
+      res.status(500).send("wtf")
+    } else {
+      res.send()
+    }
+  })
+  
+})
+
+
+// delete comment
+
+router.post("/delete-comment", authenticator, (req, res)=>{
+  const {
+    persion_id, moment_id
+  } = req.body;
+  const userId = req.user._id
+  
+  User.updateOne({_id:persion_id, "moments._id":moment_id},{
+    $pull:{
+      "moments.$.comments":{
+          persion_id:userId,
+          }
+        }
+  },(err, data)=>{
+    if (err) {
+      res.status(500).send("wtf")
+    } else {
+      res.send()
+    }
+  })
+  
+})
+
+
 
 
 //request a bounding
@@ -209,7 +313,7 @@ router.get("/req-bound/:_id", authenticator, (req, res)=>{
    requested_Bounds:{
      persion_id:personId
    }
-  }},{new:true}, (err,data)=>{
+  }}, (err,data)=>{
     if (err) {
       res.status(500).send(err)
     } else {
@@ -236,10 +340,12 @@ router.get("/req-bound/:_id", authenticator, (req, res)=>{
 
 //delete requested bounding
 
-router.get("/delete-req-bound/:_id", authenticator, (req ,res)=>{
+router.get("/delete-req-bound/:_id", authenticator, async (req ,res)=>{
   
   const personId = req.params._id
   const userId = req.user._id
+  
+//  var test = await User.findOne({_id:userId, ""})
   
   User.findOneAndUpdate({_id:userId},{$pull:{
     requested_Bounds:{
@@ -249,7 +355,6 @@ router.get("/delete-req-bound/:_id", authenticator, (req ,res)=>{
     if (err) {
       res.status(500).send(err)
     } else {
-      
       User.findOneAndUpdate({_id:personId},{
         $pull:{
           requesting_Bounds:{
@@ -382,7 +487,7 @@ router.get("/feeds", authenticator, async (req, res)=>{
    
    
   }
-  console.log(feeds)
+ 
   res.send(feeds)
   
 })
