@@ -16,8 +16,17 @@ router.get("/allUser", (req, res)=>{
 
 
 
-router.get("temp-info/:_id", (req, res)=>{
- 
+router.get("/id", (req, res)=>{
+ User.findOne({_id:req.paramd._id},(err, data=>{
+   if (err) {
+     return res.status(500).send(err)
+   } else {
+     return res.send({
+       username:data.username,
+       profile_pic:data.profile_pic
+     })
+   }
+ }))
 })
 
 
