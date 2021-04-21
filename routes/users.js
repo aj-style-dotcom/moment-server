@@ -56,11 +56,10 @@ router.post('/register', async function(req, res, next) {
     }, key)
 
 
-    res.cookie("token",token).send()
-      /*{
-      user:savedUser,
+    res.cookie("token",token).send({
+      user:data,
       token :token
-    })*/
+    })
      }
      
    });
@@ -119,6 +118,37 @@ router.post("/login", async (req, res)=> {
     res.status(500).send(e)
   }
 })
+
+//update profile 
+
+router.put("/update-profile", authenticator, async (req, res)=>{
+  
+  const me = await User.findOne({_id:req.user._id})
+  
+  const name = req.body.name || me.name
+  const bio = req.body.bio || me.bio
+  const email = req.body.email || me.email
+  const dob = req.body.dob || me.dob
+  const profile_pic = req.body.profile_pic || me.profile_pic
+  const country = req.body.country || me.country
+  
+  User.updateOne({_id:req.user._id}, {
+    name:name,
+    bio:bio,
+    email:email,
+    dob:dob,
+    profile_pic:profile_pic,
+    country:country
+  }, (err, data)=>{
+    if (err) {
+      res.status(500).send(err)
+    } else {
+      res.send(data)
+    }
+  })
+  
+})
+
 
 
 // logout 
@@ -185,7 +215,7 @@ router.post("/delete_moment/:_id", authenticator, (req, res)=>{
 
 //update moment
 
-router.post("/update_moment", authenticator, (req, res)=>{
+router.put("/update_moment", authenticator, (req, res)=>{
   const {moment_id, caption} = req.body
   User.updateOne({_id:req.user._id,
     "moments._id" : moment_id
