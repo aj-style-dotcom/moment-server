@@ -48,21 +48,14 @@ router.post('/register', async function(req, res, next) {
      if (err) {
        res.status(400).send(err)
      } else {
-       
-           // generation of token
-
        const token = jwt.sign({
       _id: data._id
     }, key)
-
-
     res.cookie("token",token).send({
       user:data,
       token :token
-    })
-     }
-     
-   });
+    }) }
+     });
 
 
  
@@ -504,20 +497,17 @@ router.get("/accept-bound-req/:_id", authenticator, (req, res)=>{
 router.get("/feeds", authenticator, async (req, res)=>{
   const userId = req.user._id
   var bounded_users = await User.findOne({_id:userId})
+  var myMoments = bounded_users.moments
   var feedable_data = bounded_users.Boundings
   
   var feeds =[]
   
   for(let x of feedable_data){
    var uData = await User.findOne({_id:x.persion_id})
-   
    x_moment = uData.moments
-   
    feeds= feeds.concat(x_moment)
-   
-   
   }
- 
+  feeds=feeds.concat(myMoments)
   res.send(feeds)
   
 })
