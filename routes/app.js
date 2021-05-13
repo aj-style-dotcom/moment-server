@@ -4,26 +4,25 @@ var User = require("../Models/Model");
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
 var checkUser = require("../bin/appMiddlewere");
-var storage = require("../bin/mediaHelper");
+var uploadFilesMiddleware = require("../bin/mediaHelper");
 var multer = require("multer");
 var fs = require("fs");
 var path = require('path');
 
+
+
 const key = "this-is-my-key";
 
-const upload = multer({
-  storage:storage
-}).single('postImageName')
 
 //get login
 router.get("/login", (req, res)=>{
-  res.render('login', {user:req.session.user})
+  res.render('login')
 })
 
 //post login
 router.post("/login", async (req, res)=>{
-  const username= req.body.uname
-  const password= req.body.pword
+  const username= req.body.username
+  const password= req.body.password
   
   if (!username || !password) {
       return res.render('login', {message:"all fields required"})
@@ -108,36 +107,37 @@ router.get("/", checkUser, async (req, res)=>{
   feeds=[]
   const userId = req.session.user
   
-  var bounded_users = await User.findOne({_id:userId})
+  var bounded_users = await User.findOne({_id:userId}).lean()
   
   var myMoments = bounded_users.moments
   var feedable_data = bounded_users.Boundings
   
   for(let x of feedable_data){
-   var uData = await User.findOne({_id:x.persion_id})
+   var uData = await User.findOne({_id:x.persion_id}).lean()
    x_moment = uData.moments
    feeds= feeds.concat(x_moment)
   }
   feeds=feeds.concat(myMoments)
-  res.render("index",{user:req.session.user,
-    feeds:feeds
+  res.render("home",{
+    user:req.session.user,
+    feeds
   })
 })
 
-//get post
-router.get("/add-post", (req, res)=>{
+//get moment
+router.get("/add-moment", (req, res)=>{
   res.render('add-post')
 })
 
-//post post
-router.post("/add-post", checkUser, upload, async (req, res)=>{
+//post moment
+router.post("/add-moment", checkUser, uploadFilesMiddleware, async (req, res)=>{
   
   const postImageName = req.file.filename
   const caption = req.body.caption
   
   var userData = await User.findOne({_id:req.session.user})
   
-  User.findOneAndUpdate({_id:req.session.user}, {$push:{
+  User.updateOne({_id:req.session.user}, {$push:{
     moments:{
       user_id:userData._id,
       user_username:userData.username,

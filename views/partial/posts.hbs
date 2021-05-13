@@ -1,0 +1,16 @@
+<div class="posts">
+  {{#each posts}}
+  <div class="head">
+    <b>{{this.user_username}}</b>
+  </div>
+  <div class="body">
+    <img src="public/uploads/{{this.postImageName}}"/>
+  </div>
+  <div class="foot">
+    <ul>
+      <li>like</li>
+      <li>comment</li>
+    </ul>
+  </div>
+  {{/each}}
+</div>

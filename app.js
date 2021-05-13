@@ -16,8 +16,8 @@ mongoose.connect(mongoDB, {
   useCreateIndex: true, 
   useUnifiedTopology: true
 }).then(()=> {
-  console.log("connected to database ✓")
-}).catch((err)=> console.log(err))
+  console.log("connected to database ✔️")
+}).catch((err)=> console.log("can't connect to database ❌"))
 
 // all usables..
 var app = express();
@@ -38,18 +38,33 @@ app.use(session({
 app.use(express.static(__dirname + '/public'));
 
 
-
 //setting views
-app.engine('hbs', exphbs({
-    defaultLayout: 'main',
-    extname: '.html'
-}));
+
+/*exphbs.registerHelper("iterate", function(array, options){
+  array.map((obj)=>{
+    return options.fn(obj)
+  })
+})*/
 
 app.set('view engine', 'hbs');
-app.set('views','./views');
+
+app.engine('hbs', exphbs({
+    defaultLayout: 'main',
+    extname: '.hbs',
+    partialsDir: __dirname+"/views/partial",
+    helpers:{
+      iterate:function(array, options){
+  array.map((obj)=>{
+    return options.fn(obj)
+  })
+}
+    }
+}));
+
+//app.set('views','./views');
 
 
-//all routes   ..........
+//landing routes   ..........
 
 app.use('/private', require('./routes/users'));
 app.use("/public", require("./routes/public"));

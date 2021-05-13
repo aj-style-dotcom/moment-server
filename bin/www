@@ -21,6 +21,6 @@ var server = http.createServer(app);
 
 server.listen(port);
 server.on('error', (err)=>{
-console.log("error while starting server"+err)});
+console.log("error while starting server ❌ \n"+ err)});
 server.on('listening',  ()=>{
-console.log("server started ✓")});
+console.log("server started ✔️")});
